@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoElite — Premium Car Dealership</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sidebar-w:240px;
+  --sidebar-collapsed:72px;
+  --bg:#0b0b0e;--bg2:#13131a;--bg3:#1c1c26;--bg4:#252530;
+  --text:#f2f2f4;--text2:#9898a8;--text3:#55555f;
+  --accent:#e8b84b;--accent2:#c89830;
+  --red:#e84a4a;--green:#3de89a;--blue:#4a8be8;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --radius:12px;--radius-lg:18px;--radius-xl:24px;
+  --shadow:0 24px 64px rgba(0,0,0,0.5);
+}
+.light-mode{
+  --bg:#f0efe9;--bg2:#ffffff;--bg3:#e8e7e0;--bg4:#dddcd4;
+  --text:#18181e;--text2:#58585f;--text3:#a0a0a8;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);
+  --shadow:0 24px 64px rgba(0,0,0,0.12);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;transition:background 0.3s,color 0.3s}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* ── LAYOUT ── */
+#app-layout{display:flex;min-height:100vh}
+#sidebar{
+  position:fixed;top:0;left:0;bottom:0;
+  width:var(--sidebar-w);
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  z-index:200;
+  transition:width 0.3s cubic-bezier(.4,0,.2,1),transform 0.3s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+}
+#sidebar.collapsed{width:var(--sidebar-collapsed)}
+#main-content{
+  margin-left:var(--sidebar-w);
+  flex:1;min-width:0;
+  transition:margin-left 0.3s cubic-bezier(.4,0,.2,1);
+}
+#main-content.collapsed{margin-left:var(--sidebar-collapsed)}
+
+/* ── SIDEBAR HEADER ── */
+.sidebar-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 18px 16px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  min-height:68px;
+}
+.sidebar-logo{
+  font-family:'Bebas Neue',sans-serif;font-size:26px;
+  color:var(--accent);letter-spacing:0.12em;cursor:pointer;
+  white-space:nowrap;overflow:hidden;
+  transition:opacity 0.2s;
+}
+#sidebar.collapsed .sidebar-logo{opacity:0;width:0;pointer-events:none}
+.sidebar-toggle{
+  background:none;border:1px solid var(--border2);
+  color:var(--text2);border-radius:9px;
+  width:36px;height:36px;flex-shrink:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:18px;transition:all 0.2s;
+}
+.sidebar-toggle:hover{background:var(--bg3);color:var(--accent);border-color:var(--accent)}
+
+/* ── SIDEBAR NAV ── */
+.sidebar-nav{flex:1;padding:16px 10px;overflow-y:auto;overflow-x:hidden}
+.nav-section-label{
+  font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--text3);padding:0 8px;margin:16px 0 8px;
+  white-space:nowrap;overflow:hidden;
+  transition:opacity 0.2s;
+}
+#sidebar.collapsed .nav-section-label{opacity:0}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border-radius:11px;
+  cursor:pointer;transition:all 0.2s;
+  border:none;background:none;width:100%;text-align:left;
+  color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+  white-space:nowrap;margin-bottom:2px;position:relative;
+}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(232,184,75,0.12);color:var(--accent)}
+.nav-item.active::before{
+  content:'';position:absolute;left:0;top:20%;bottom:20%;
+  width:3px;border-radius:2px;background:var(--accent);
+}
+.nav-icon{font-size:18px;flex-shrink:0;width:24px;text-align:center}
+.nav-label{transition:opacity 0.2s,width 0.2s;overflow:hidden}
+#sidebar.collapsed .nav-label{opacity:0;width:0}
+.nav-badge{
+  margin-left:auto;background:var(--accent);color:#000;
+  border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;
+  flex-shrink:0;transition:opacity 0.2s;
+}
+#sidebar.collapsed .nav-badge{opacity:0}
+
+/* ── SIDEBAR TOOLTIP (collapsed) ── */
+.nav-item[data-tip]:hover::after{
+  content:attr(data-tip);
+  position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);
+  background:var(--bg4);color:var(--text);
+  padding:5px 10px;border-radius:8px;font-size:13px;white-space:nowrap;
+  border:1px solid var(--border2);pointer-events:none;z-index:300;
+  opacity:1;
+}
+
+/* ── SIDEBAR FOOTER ── */
+.sidebar-footer{
+  padding:14px 10px;border-top:1px solid var(--border);flex-shrink:0;
+}
+.sidebar-footer-btn{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border-radius:11px;
+  cursor:pointer;border:none;background:none;
+  width:100%;color:var(--text2);font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;transition:all 0.2s;white-space:nowrap;
+}
+.sidebar-footer-btn:hover{background:var(--bg3);color:var(--text)}
+.sidebar-user{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;margin-bottom:4px;
+}
+.user-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:#000;flex-shrink:0;
+}
+.user-info{overflow:hidden;transition:opacity 0.2s}
+#sidebar.collapsed .user-info{opacity:0;width:0}
+.user-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:11px;color:var(--text3)}
+
+/* ── MOBILE OVERLAY ── */
+#sidebar-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  z-index:199;backdrop-filter:blur(2px);
+}
+#sidebar-overlay.visible{display:block}
+
+/* ── MOBILE TOPBAR ── */
+#topbar{
+  display:none;position:sticky;top:0;z-index:150;
+  height:60px;background:rgba(11,11,14,0.95);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  align-items:center;padding:0 16px;gap:12px;
+}
+.light-mode #topbar{background:rgba(240,239,233,0.95)}
+.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);letter-spacing:0.1em;flex:1;cursor:pointer}
+.hamburger{
+  background:none;border:1px solid var(--border2);color:var(--text2);
+  border-radius:9px;width:38px;height:38px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  transition:all 0.2s;flex-shrink:0;
+}
+.hamburger:hover{background:var(--bg3);color:var(--accent);border-color:var(--accent)}
+.topbar-cart{
+  background:var(--accent);color:#000;border:none;border-radius:9px;
+  padding:7px 14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s;
+}
+.topbar-cart:hover{background:var(--accent2)}
+
+/* ── CART BTN (sidebar) ── */
+.sidebar-cart-btn{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border-radius:11px;
+  cursor:pointer;border:none;
+  background:rgba(232,184,75,0.1);
+  width:100%;color:var(--accent);font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:600;transition:all 0.2s;white-space:nowrap;margin-bottom:2px;
+}
+.sidebar-cart-btn:hover{background:rgba(232,184,75,0.2)}
+
+/* ── MAIN CONTENT ── */
+.page-wrap{padding:0}
+
+/* ── HERO ── */
+.hero{
+  position:relative;min-height:100vh;
+  display:flex;align-items:center;overflow:hidden;padding:80px 48px;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 70% 50%,rgba(232,184,75,0.06) 0%,transparent 70%),
+              radial-gradient(ellipse 40% 40% at 20% 80%,rgba(74,139,232,0.04) 0%,transparent 60%),var(--bg);
+}
+.hero-img{position:absolute;right:0;top:0;bottom:0;width:55%;overflow:hidden;pointer-events:none}
+.hero-img img{width:100%;height:100%;object-fit:cover;opacity:0.2;filter:saturate(0.5);
+  mask-image:linear-gradient(to left,rgba(0,0,0,0.85) 30%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to left,rgba(0,0,0,0.85) 30%,transparent 100%);}
+.light-mode .hero-img img{opacity:0.1}
+.hero-grid{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+.light-mode .hero-grid{background-image:linear-gradient(rgba(0,0,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.04) 1px,transparent 1px)}
+.hero-content{position:relative;z-index:1;max-width:600px}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(232,184,75,0.12);border:1px solid rgba(232,184,75,0.25);
+  color:var(--accent);border-radius:100px;padding:6px 16px;
+  font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:28px;
+}
+.hero-badge::before{content:'';width:6px;height:6px;background:var(--accent);border-radius:50%}
+.hero-h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,8vw,110px);line-height:0.92;color:var(--text);margin-bottom:24px}
+.hero-h1 .accent{color:var(--accent)}
+.hero-p{font-size:16px;color:var(--text2);line-height:1.75;margin-bottom:36px;max-width:440px}
+.search-bar{
+  display:flex;gap:10px;flex-wrap:wrap;background:var(--bg2);
+  border:1px solid var(--border2);border-radius:var(--radius-xl);
+  padding:10px;max-width:640px;box-shadow:var(--shadow);
+}
+.s-input{
+  flex:1;min-width:120px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:10px;padding:10px 13px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border 0.2s;appearance:none;
+}
+.s-input:focus{border-color:var(--accent)}
+.s-input::placeholder{color:var(--text3)}
+.search-go{
+  background:var(--accent);color:#000;border:none;border-radius:10px;
+  padding:10px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;white-space:nowrap;transition:all 0.2s;
+}
+.search-go:hover{background:var(--accent2)}
+
+/* ── STATS ── */
+.stats-bar{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:32px 48px}
+.stats-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-around;gap:20px;flex-wrap:wrap}
+.stat{text-align:center}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--accent);line-height:1}
+.stat-l{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px}
+
+/* ── SECTION ── */
+.section{max-width:1200px;margin:0 auto;padding:60px 48px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:32px}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--text)}
+.sec-title .a{color:var(--accent)}
+.see-all{background:none;border:none;color:var(--accent);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;text-decoration:underline;padding:0}
+
+/* ── CARS GRID ── */
+.cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+
+/* ── CAR CARD ── */
+.car-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:all 0.3s;position:relative}
+.car-card:hover{border-color:rgba(232,184,75,0.4);transform:translateY(-4px);box-shadow:0 20px 56px rgba(232,184,75,0.08)}
+.card-img{width:100%;height:200px;background:var(--bg3);position:relative;overflow:hidden}
+.card-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.5s}
+.car-card:hover .card-img img{transform:scale(1.06)}
+.card-img::after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.4) 100%);pointer-events:none}
+.card-badge{position:absolute;top:11px;left:11px;z-index:2;font-size:10px;font-weight:800;padding:4px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:0.08em}
+.badge-new{background:var(--green);color:#000}
+.badge-sale{background:var(--red);color:#fff}
+.badge-hot{background:var(--accent);color:#000}
+.fav-btn{position:absolute;top:9px;right:9px;z-index:2;background:rgba(0,0,0,0.55);border:none;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;backdrop-filter:blur(4px)}
+.fav-btn:hover{transform:scale(1.18);background:rgba(0,0,0,0.75)}
+.fav-btn.active{background:rgba(232,75,75,0.3)}
+.card-body{padding:16px}
+.card-brand{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.card-name{font-size:17px;font-weight:600;color:var(--text);margin-bottom:9px}
+.card-specs{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.card-spec{font-size:12px;color:var(--text2)}
+.card-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px}
+.card-price{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text)}
+.card-price sup{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text3);font-weight:400}
+.add-cart-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:7px 14px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.add-cart-btn:hover{background:var(--accent);color:#000;border-color:var(--accent)}
+.add-cart-btn.in-cart{background:var(--green);color:#000;border-color:var(--green)}
+
+/* ── LISTINGS ── */
+.listings-header{padding:48px 48px 0;max-width:1200px;margin:0 auto}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:56px;color:var(--text)}
+.page-sub{font-size:14px;color:var(--text2);margin-top:4px;margin-bottom:24px}
+.filters-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:24px}
+.chip{background:var(--bg2);border:1px solid var(--border2);color:var(--text2);border-radius:100px;padding:6px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif}
+.chip:hover,.chip.on{background:var(--accent);color:#000;border-color:var(--accent)}
+.sort-sel{background:var(--bg2);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;outline:none;margin-left:auto;appearance:none}
+
+/* ── DETAIL ── */
+.detail-wrap{max-width:1100px;margin:0 auto;padding:36px 48px}
+.back-btn{background:none;border:none;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;margin-bottom:28px;padding:0;transition:color 0.2s}
+.back-btn:hover{color:var(--accent)}
+.detail-grid{display:grid;grid-template-columns:1fr 400px;gap:36px}
+.detail-main-img{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);height:380px;overflow:hidden;margin-bottom:14px}
+.detail-main-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.5s}
+.detail-main-img:hover img{transform:scale(1.04)}
+.thumb-row{display:flex;gap:8px}
+.thumb{background:var(--bg2);border:2px solid var(--border);border-radius:10px;width:84px;height:62px;overflow:hidden;cursor:pointer;transition:all 0.2s;flex-shrink:0}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb:hover,.thumb.on{border-color:var(--accent)}
+.detail-sidebar{position:sticky;top:24px;height:fit-content}
+.d-brand{font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.d-name{font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:var(--text);margin-bottom:8px}
+.rating-row{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.stars{color:var(--accent);font-size:14px;letter-spacing:2px}
+.d-price{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--text);line-height:1}
+.d-price sup{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:400;color:var(--text3)}
+.monthly{font-size:13px;color:var(--text2);margin-bottom:22px;margin-top:4px}
+.specs-2col{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:22px}
+.spec-box{background:var(--bg3);border-radius:10px;padding:11px 13px}
+.spec-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;margin-bottom:2px}
+.spec-val{font-size:14px;font-weight:500;color:var(--text)}
+.d-desc{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:20px}
+.cta-row{display:flex;gap:9px;margin-bottom:10px}
+.cta-main{flex:1;background:var(--accent);color:#000;border:none;border-radius:12px;padding:14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.cta-main:hover{background:var(--accent2)}
+.cta-main.added{background:var(--green)}
+.cta-outline{background:none;border:1px solid var(--border2);color:var(--text);border-radius:12px;padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:15px;cursor:pointer;transition:all 0.2s}
+.cta-outline:hover{border-color:var(--accent);color:var(--accent)}
+.cta-full{width:100%;background:none;border:1px solid var(--border2);color:var(--text);border-radius:12px;padding:13px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:all 0.2s}
+.cta-full:hover{border-color:var(--blue);color:var(--blue)}
+.reviews-section{margin-top:44px}
+.review-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.rev-head{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.rev-avatar{width:38px;height:38px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.rev-name{font-size:14px;font-weight:600}
+.rev-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.rev-text{font-size:13px;color:var(--text2);line-height:1.65}
+
+/* ── CART ── */
+.cart-wrap{max-width:700px;margin:0 auto;padding:40px 48px}
+.cart-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;display:flex;align-items:center;gap:16px;margin-bottom:12px}
+.ci-img{width:90px;height:68px;border-radius:10px;flex-shrink:0;overflow:hidden;background:var(--bg3)}
+.ci-img img{width:100%;height:100%;object-fit:cover}
+.ci-info{flex:1}
+.ci-name{font-size:16px;font-weight:600;margin-bottom:3px}
+.ci-meta{font-size:13px;color:var(--text2)}
+.ci-price{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent)}
+.rm-btn{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px;transition:color 0.2s;line-height:1}
+.rm-btn:hover{color:var(--red)}
+.cart-summary{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:22px}
+.sum-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:var(--text2);border-bottom:1px solid var(--border)}
+.sum-total{display:flex;justify-content:space-between;font-size:20px;font-weight:700;color:var(--text);padding:14px 0 4px;border-top:1px solid var(--border2);margin-top:8px}
+.sum-total span:last-child{color:var(--accent)}
+.checkout-btn{width:100%;background:var(--accent);color:#000;border:none;border-radius:12px;padding:15px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:16px;transition:all 0.2s}
+.checkout-btn:hover{background:var(--accent2)}
+
+/* ── AUTH ── */
+.auth-wrap{max-width:420px;margin:60px auto;padding:0 24px}
+.auth-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-xl);padding:34px}
+.auth-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent);margin-bottom:6px}
+.auth-h{font-family:'Bebas Neue',sans-serif;font-size:40px}
+.auth-sub{font-size:14px;color:var(--text2);margin-bottom:28px;margin-top:4px}
+.form-grp{margin-bottom:14px}
+.form-lbl{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.07em}
+.form-inp{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border 0.2s}
+.form-inp:focus{border-color:var(--accent)}
+.form-inp::placeholder{color:var(--text3)}
+.auth-submit{width:100%;background:var(--accent);color:#000;border:none;border-radius:11px;padding:13px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;transition:all 0.2s}
+.auth-submit:hover{background:var(--accent2)}
+.auth-switch-row{text-align:center;margin-top:20px;font-size:14px;color:var(--text2)}
+.link-btn{background:none;border:none;color:var(--accent);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;text-decoration:underline}
+
+/* ── WISHLIST / CHECKOUT ── */
+.wishlist-wrap{max-width:1200px;margin:0 auto;padding:40px 48px}
+.checkout-wrap{max-width:680px;margin:0 auto;padding:40px 48px}
+.checkout-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-bottom:18px}
+.checkout-section-title{font-size:15px;font-weight:600;margin-bottom:16px}
+
+/* ── FOOTER ── */
+footer{background:var(--bg2);border-top:1px solid var(--border);margin-top:80px;position:relative;overflow:hidden}
+.footer-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.footer-bg-text{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);font-family:'Bebas Neue',sans-serif;font-size:140px;color:var(--accent);opacity:0.03;white-space:nowrap;pointer-events:none;letter-spacing:0.1em;user-select:none}
+.footer-top{max-width:1200px;margin:0 auto;padding:56px 48px 36px;display:grid;grid-template-columns:2fr 1fr 1fr 1.2fr;gap:44px}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--accent);letter-spacing:0.12em;margin-bottom:12px;display:block}
+.footer-tagline{font-size:14px;color:var(--text2);line-height:1.7;max-width:260px;margin-bottom:22px}
+.footer-socials{display:flex;gap:9px}
+.social-btn{width:36px;height:36px;border-radius:9px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;transition:all 0.2s;color:var(--text2)}
+.social-btn:hover{background:var(--accent);border-color:var(--accent);transform:translateY(-2px)}
+.footer-col-title{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:18px}
+.footer-col-links{display:flex;flex-direction:column;gap:11px}
+.footer-link{color:var(--text2);font-size:14px;cursor:pointer;transition:all 0.2s;background:none;border:none;font-family:'DM Sans',sans-serif;text-align:left;padding:0;display:flex;align-items:center;gap:6px}
+.footer-link:hover{color:var(--text);padding-left:6px}
+.newsletter-input-row{display:flex;gap:7px;margin-top:8px}
+.newsletter-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border 0.2s}
+.newsletter-input:focus{border-color:var(--accent)}
+.newsletter-input::placeholder{color:var(--text3)}
+.newsletter-btn{background:var(--accent);color:#000;border:none;border-radius:9px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.newsletter-btn:hover{background:var(--accent2)}
+.newsletter-note{font-size:11px;color:var(--text3);margin-top:7px}
+.footer-badges{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
+.footer-badge{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.footer-divider{max-width:1200px;margin:0 auto;border:none;border-top:1px solid var(--border)}
+.footer-bottom{max-width:1200px;margin:0 auto;padding:18px 48px 26px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.footer-copy{font-size:12px;color:var(--text3)}
+.footer-legal{display:flex;gap:18px}
+.footer-legal-link{font-size:12px;color:var(--text3);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;transition:color 0.2s;padding:0}
+.footer-legal-link:hover{color:var(--accent)}
+
+/* ── TOAST ── */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:9px}
+.toast{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:13px 18px;font-size:14px;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:toastIn 0.3s ease;min-width:200px;display:flex;align-items:center;gap:9px}
+.toast.success{border-color:var(--green)}
+.toast.error{border-color:var(--red)}
+.toast.info{border-color:var(--accent)}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:80px 24px}
+.empty-icon{font-size:60px;margin-bottom:16px}
+.empty-title{font-size:19px;font-weight:600;color:var(--text2);margin-bottom:7px}
+.empty-sub{font-size:14px;color:var(--text3);margin-bottom:26px}
+.empty-btn{background:var(--accent);color:#000;border:none;border-radius:10px;padding:11px 26px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.empty-btn:hover{background:var(--accent2)}
+
+.fade-in{animation:fadeIn 0.4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  .detail-grid{grid-template-columns:1fr}
+  .detail-sidebar{position:static}
+  .hero-img{display:none}
+  .section,.listings-header,.detail-wrap,.cart-wrap,.wishlist-wrap,.checkout-wrap{padding-left:24px;padding-right:24px}
+  .footer-top{grid-template-columns:1fr 1fr;gap:28px;padding:36px 24px 24px}
+  .footer-bottom{padding:14px 24px 22px}
+}
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.mobile-open{transform:translateX(0);width:var(--sidebar-w) !important}
+  #main-content{margin-left:0 !important}
+  #topbar{display:flex}
+  .hero{padding:50px 20px;min-height:calc(100vh - 60px)}
+  .section{padding:40px 16px}
+  .listings-header,.detail-wrap,.cart-wrap,.wishlist-wrap,.checkout-wrap{padding:24px 16px}
+  .footer-top{grid-template-columns:1fr;padding:28px 16px 20px}
+  .footer-bottom{padding:14px 16px 22px}
+  .footer-bg-text{font-size:70px}
+}
+@media(max-width:480px){
+  .cars-grid{grid-template-columns:1fr}
+  .hero-h1{font-size:56px}
+  .search-bar{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast-container"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useContext, createContext, useMemo, useCallback } = React;
+
+
+
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const CARS = [
+  { id:1, brand:'Ferrari', name:'Roma Spider', year:2024, price:275000, mileage:0, fuel:'Petrol', transmission:'Automatic', engine:'3.9L V8 Twin-Turbo', power:'620 hp', seats:2, color:'Rosso Corsa',
+    img:'https://images.unsplash.com/photo-1592198084033-aade902d1aae?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8ZmVyYXJyaXxlbnwwfHwwfHx8MA%3D%3D',
+    imgs:[
+      'https://images.unsplash.com/photo-1674677210708-ee3456132d76?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZmVyYXJyaSUyMHJvbWElMjBzcGlkZXJ8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1609602291826-8480643f5ccc?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZmVycmFyaSUyMHJlbWElMjBzcGlkZXJ8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1584048389131-153fffc61ae3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGZlcnJhcmklMjByZW1hJTIwc3BpZGVyfGVufDB8fDB8fHww'
+    ],
+    badge:'new', rating:4.9, reviews:18, desc:'The Roma Spider is the open-top version of Ferrari\'s most beautiful GT. A perfect synthesis of timeless style and pure driving emotion, this convertible delivers the prancing horse experience with the sky as your roof.' },
+  { id:2, brand:'Porsche', name:'911 Turbo S', year:2024, price:215000, mileage:820, fuel:'Petrol', transmission:'PDK 8-Speed', engine:'3.8L Flat-6 Turbo', power:'650 hp', seats:4, color:'GT Silver Metallic',
+    img:'https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cG9yc2NoZXxlbnwwfHwwfHx8MA%3D%3D',
+    imgs:[
+      'https://images.unsplash.com/photo-1564694457220-0efef1a70d6d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cG9yc2NoJTIwOTExJTIwVHVyYm8lMjBTfGVufDB8fDB8fHww',
+      'https://images.unsplash.com/photo-1611821064430-0d40291d0f0b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8cG9yc2NoJTIwOTExJTIwVHVyYm8lMjBTfGVufDB8fDB8fHww',
+      'https://images.unsplash.com/photo-1711591748639-a746d84af895?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8cG9yc2NoJTIwOTExJTIwVHVyYm8lMjBTfGVufDB8fDB8fHww'
+    ],
+    badge:'new', rating:4.8, reviews:42, desc:'The 911 Turbo S is the pinnacle of Porsche engineering — a car that sets the benchmark for all sports cars. Precision handling, explosive performance, and everyday usability make it the ultimate daily driver.' },
+  { id:3, brand:'Mercedes', name:'AMG G63', year:2023, price:185000, mileage:5200, fuel:'Petrol', transmission:'9G-Tronic', engine:'4.0L V8 Biturbo', power:'585 hp', seats:5, color:'Obsidian Black',
+    img:'https://images.unsplash.com/photo-1648413653819-7c0fd93e8e6a?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8TWVyY2VkZXMlMjBBTUclMjBHNjN8ZW58MHx8MHx8fDA%3D',
+    imgs:[
+      'https://images.unsplash.com/photo-1648413653877-ade5eefd2f1b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8TWVyY2VkZXMlMjBBTUclMjBHNjN8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1680843274944-40433b411e2b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8TWVyY2VkZXMlMjBBTUclMjBHNjN8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1669428800842-5f1d3645cef2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8TWVyY2VkZXMlMjBBTUclMjBHNjN8ZW58MHx8MHx8fDA%3D'
+    ],
+    badge:null, rating:4.7, reviews:67, desc:'The G63 is an icon reimagined. Three decades of heritage meet cutting-edge AMG technology in this imposing luxury SUV. Trail any terrain with absolute authority while wrapped in handcrafted German luxury.' },
+  { id:4, brand:'Lamborghini', name:'Urus S', year:2024, price:320000, mileage:200, fuel:'Petrol', transmission:'8-Speed Auto', engine:'4.0L V8 Twin-Turbo', power:'666 hp', seats:5, color:'Verde Mantis',
+    img:'https://images.unsplash.com/photo-1630312465536-5c6b1f76dc3f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8TGFtYm9yZ2hpbml8ZW58MHx8MHx8fDA%3D',
+    imgs:[
+      'https://images.unsplash.com/photo-1519245659620-e859806a8d3b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8TGFtYm9yZ2hpbml8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1612825173281-9a193378527e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8TGFtYm9yZ2hpbml8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1621285853634-713b8dd6b5fd?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fExhbWJvcmdoaW5pfGVufDB8fDB8fHww'
+    ],
+    badge:'new', rating:4.9, reviews:29, desc:'The Urus S delivers supercar performance in a super SUV package. Raging bull DNA flows through every system — from the snarling exhaust note to the lightning-fast 0-60 of just 3.5 seconds.' },
+  { id:5, brand:'BMW', name:'M5 Competition', year:2024, price:142000, mileage:1200, fuel:'Hybrid', transmission:'M Steptronic 8-Spd', engine:'4.4L V8 PHEV', power:'727 hp', seats:5, color:'Frozen Brooklyn Grey',
+    img:'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Qk1XfGVufDB8fDB8fHww',
+    imgs:[
+      'https://images.unsplash.com/photo-1603189617530-6d32306f57c5?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Qk1XJTIwTTUlMjBDb21wZXRpdGlvbnxlbnwwfHwwfHx8MA%3D%3D',
+      'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Qk1XJTIwTTUlMjBDb21wZXRpdGlvbnxlbnwwfHwwfHx8MA%3D%3D',
+      'https://images.unsplash.com/photo-1635770311293-b09d08a522fc?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fEJNVyUyME01JTIwQ29tcGV0aXRpb258ZW58MHx8MHx8fDA%3D'
+    ],
+    badge:'sale', rating:4.6, reviews:88, desc:'The all-new hybrid M5 is the most powerful M car ever built. Electric torque meets V8 fury in a car that will take you to track days in the week and school runs on the weekend.' },
+  { id:6, brand:'Bentley', name:'Continental GT', year:2023, price:230000, mileage:3400, fuel:'Petrol', transmission:'DCT 8-Speed', engine:'6.0L W12 TSI', power:'659 hp', seats:4, color:'Midnight Emerald',
+    img:'https://images.unsplash.com/photo-1471289549423-04adaecfa1f1?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8QmVudGxleXxlbnwwfHwwfHx8MA%3D%3D',
+    imgs:[
+      'https://images.unsplash.com/photo-1471289549423-04adaecfa1f1?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8QmVudGxleSUyMENvbnRpbmVudGFsJTIwR1R8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1609679605571-4323e084c314?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8QmVudGxleSUyMENvbnRpbmVudGFsJTIwR1R8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1678026549202-07fc8f873143?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fEJlbnRsZXklMjBDb250aW5lbnRhbCUyMEdUfGVufDB8fDB8fHww'
+    ],
+    badge:null, rating:4.8, reviews:35, desc:'The Continental GT embodies the Bentley ethos — extraordinary performance and handcrafted luxury in perfect harmony. Every interior surface is shaped by skilled artisans at the Crewe factory.' },
+  { id:7, brand:'Tesla', name:'Model S Plaid', year:2024, price:98000, mileage:4100, fuel:'Electric', transmission:'Single Speed', engine:'Tri-Motor Electric', power:'1020 hp', seats:5, color:'Pearl White',
+    img:'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fFRlc2xhfGVufDB8fDB8fHww',
+    imgs:[
+      'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8VGVzbGElMjBNb2RlbCUyMFMlMjBQbGFpZHxlbnwwfHwwfHx8MA%3D%3D',
+      'https://images.unsplash.com/photo-1698514333866-e0d21c6c7d6d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8VGVzbGElMjBNb2RlbCUyMFMlMjBQbGFpZHxlbnwwfHwwfHx8MA%3D%3D',
+      'https://plus.unsplash.com/premium_photo-1736637312860-88cccd4cbac7?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8VGVzbGElMjBNb2RlbCUyMFMlMjBQbGFpZHxlbnwwfHwwfHx8MA%3D%3D'
+    ],
+    badge:null, rating:4.7, reviews:124, desc:'The Model S Plaid is the quickest production car ever made. 0-60 in under 2 seconds with a 396-mile EPA range. This is the future of performance, today.' },
+  { id:8, brand:'Aston Martin', name:'DB12', year:2024, price:245000, mileage:600, fuel:'Petrol', transmission:'ZF 8-Speed Auto', engine:'4.0L V8 Twin-Turbo', power:'671 hp', seats:4, color:'Cognac Tan',
+    img:'https://images.unsplash.com/photo-1584082411947-dfa856e714eb?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8QXN0b24lMjBNYXJ0aW58ZW58MHx8MHx8fDA%3D',
+    imgs:[
+      'https://images.unsplash.com/photo-1776164166302-72d874fe2125?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8QXN0b24lMjBNYXJ0aW4lMjBEQjEyfGVufDB8fDB8fHww',
+      'https://images.unsplash.com/photo-1776164166292-babe1001b2cb?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8QXN0b24lMjBNYXJ0aW4lMjBEQjEyfGVufDB8fDB8fHww',
+      'https://plus.unsplash.com/premium_photo-1737559694560-1227c63d0885?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8QXN0b24lMjBNYXJ0aW4lMjBEQjEyfGVufDB8fDB8fHww'
+    ],
+    badge:'new', rating:4.8, reviews:22, desc:'The DB12 heralds a new era for Aston Martin — the world\'s first Super Tourer. Blistering performance meets effortless refinement in a GT that redefines what the badge stands for.' },
+  { id:9, brand:'McLaren', name:'720S Spider', year:2023, price:310000, mileage:1800, fuel:'Petrol', transmission:'7-Speed SSG', engine:'4.0L V8 Twin-Turbo', power:'720 hp', seats:2, color:'Papaya Spark',
+    img:'https://images.unsplash.com/photo-1621615578530-cbf3c443165f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8TWNMYXJlbnxlbnwwfHwwfHx8MA%3D%3D',
+    imgs:[
+      'https://images.unsplash.com/photo-1731096433166-a3308591bac6?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8TWNMYXJlbiUyMDcyMFMlMjBTcGlkZXJ8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1697179162923-9ea45f98092c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8TWNMYXJlbiUyMDcyMFMlMjBTcGlkZXJ8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1748091677495-b55964d35458?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8TWNMYXJlbiUyMDcyMFMlMjBTcGlkZXJ8ZW58MHx8MHx8fDA%3D'
+    ],
+    badge:null, rating:4.9, reviews:31, desc:'Pure distilled performance. The 720S Spider combines a retractable hardtop with one of the most focused chassis in the world. Every drive is an event; every corner a revelation.' },
+  { id:10, brand:'Rolls-Royce', name:'Ghost', year:2023, price:380000, mileage:2700, fuel:'Petrol', transmission:'8-Speed Satellite', engine:'6.75L V12 Twin-Turbo', power:'563 hp', seats:5, color:'Arctic White',
+    img:'https://images.unsplash.com/photo-1748847333536-054d1a33326d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fFJvbGxzLVJveWNlfGVufDB8fDB8fHww',
+    imgs:[
+      'https://images.unsplash.com/photo-1647200528165-12fc669c247e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Um9sbHMtUm95Y2UlMjBHaG9zdHxlbnwwfHwwfHx8MA%3D%3D',
+      'https://images.unsplash.com/photo-1696233016084-30c8345d85ff?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8Um9sbHMtUm95Y2UlMjBHaG9zdHxlbnwwfHwwfHx8MA%3D%3D',
+      'https://images.unsplash.com/photo-1728458602333-c0fdc3ece8a5?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Um9sbHMtUm95Y2UlMjBHaG9zdHxlbnwwfHwwfHx8MA%3D%3Dhttps://hips.hearstapps.com/hmg-prod/images/2021-rolls-royce-ghost-101-1599610430.jpg'
+    ],
+    badge:'hot', rating:5.0, reviews:14, desc:'The Ghost is post-opulence personified. A complete re-engineering of every component results in a car that silences the world outside with remarkable architectural serenity.' },
+  { id:11, brand:'Porsche', name:'Taycan Turbo S', year:2024, price:187000, mileage:900, fuel:'Electric', transmission:'2-Speed PDK', engine:'Dual-Motor Electric', power:'750 hp', seats:4, color:'Gentian Blue',
+    img:'https://images.unsplash.com/photo-1708885959562-8fd3be5f4036?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8UG9yc2NoZSUyMFRheWNhbiUyMFR1cmJvJTIwU3xlbnwwfHwwfHx8MA%3D%3D',
+    imgs:[
+      'https://images.unsplash.com/photo-1570116474079-f67ad3d5c772?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fFBvcnNjaGUlMjBUYXljYW4lMjBUdXJibyUyMFN8ZW58MHx8MHx8fDA%3D',
+      'https://images.unsplash.com/photo-1580151297944-7c4cedd0c5b2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fFBvcnNjaGUlMjBUYXljYW4lMjBUdXJibyUyMFN8ZW58MHx8MHx8fDA%3D',
+      'https://plus.unsplash.com/premium_photo-1736637312833-d62623ac4df4?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fFBvcnNjaGUlMjBUYXljYW4lMjBUdXJibyUyMFN8ZW58MHx8MHx8fDA%3D'
+    ],
+    badge:'new', rating:4.7, reviews:56, desc:'The Taycan Turbo S is Porsche\'s most compelling argument for the electric future. Sportscar handling, Panamera practicality, and zero-emission performance that embarrasses combustion rivals.' },
+  { id:12, brand:'Ferrari', name:'SF90 Stradale', year:2024, price:520000, mileage:0, fuel:'Hybrid', transmission:'8-Speed DCT', engine:'4.0L V8 PHEV', power:'986 hp', seats:2, color:'Giallo Modena',
+    img:'https://images.unsplash.com/photo-1609138315745-4e44ac3bbd8d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8RmVycmFyaSUyMFNGOTAlMjBTdHJhZGFsZXxlbnwwfHwwfHx8MA%3D%3D',
+    imgs:[
+      'https://images.unsplash.com/photo-1662034546833-b2b07430992f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8RmVycmFyaSUyMFNGOTAlMjBTdHJhZGFsZXxlbnwwfHwwfHx8MA%3D%3D',
+      'https://images.unsplash.com/photo-1675426513962-1db7e4c707c3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8RmVycmFyaSUyMFNGOTAlMjBTdHJhZGFsZXxlbnwwfHwwfHx8MA%3D%3D',
+      'https://images.unsplash.com/photo-1626995449612-aece6b418f55?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8RmVycmFyaSUyMFNGOTAlMjBTdHJhZGFsZXxlbnwwfHwwfHx8MA%3D%3D'
+    ],
+    badge:'new', rating:5.0, reviews:8, desc:'The SF90 is Ferrari\'s most technologically advanced road car ever. Three electric motors join a 4.0L V8 to produce nearly 1000 hp — a road-going Formula 1 experience for the chosen few.' },
+];
+
+const FALLBACKS = {
+  'Ferrari':    'https://images.unsplash.com/photo-1592198084033-aade902d1aae?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8ZmVyYXJyaXxlbnwwfHwwfHx8MA%3D%3D',
+  'Porsche':    'https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cG9yc2NoZXxlbnwwfHwwfHx8MA%3D%3D',
+  'Mercedes':   'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8TWVyY2VkZXN8ZW58MHx8MHx8fDA%3D',
+  'Lamborghini':'https://images.unsplash.com/photo-1630312465536-5c6b1f76dc3f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8TGFtYm9yZ2hpbml8ZW58MHx8MHx8fDA%3D',
+  'Bentley':    'https://images.unsplash.com/photo-1471289549423-04adaecfa1f1?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8QmVudGxleXxlbnwwfHwwfHx8MA%3D%3D',
+  'Tesla':      'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fFRlc2xhfGVufDB8fDB8fHww',
+  'Aston Martin':'https://images.unsplash.com/photo-1584082411947-dfa856e714eb?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8QXN0b24lMjBNYXJ0aW58ZW58MHx8MHx8fDA%3D',
+  'McLaren':    'https://images.unsplash.com/photo-1621615578530-cbf3c443165f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8TWNMYXJlbnxlbnwwfHwwfHx8MA%3D%3D',
+  'Rolls-Royce':'https://images.unsplash.com/photo-1748847333536-054d1a33326d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fFJvbGxzLVJveWNlfGVufDB8fDB8fHww',
+  'BMW':'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Qk1XfGVufDB8fDB8fHww',
+};
+
+const BRANDS = ['All', ...new Set(CARS.map(c => c.brand))];
+const Ctx = createContext();
+
+// ─── PROVIDER ────────────────────────────────────────────────────────────────
+// FIX: Added sidebarCollapsed, setSidebarCollapsed, mobileOpen, setMobileOpen to context
+function Provider({ children }) {
+  const [page, setPage] = useState('home');
+  const [selectedCar, setSelectedCar] = useState(null);
+  const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+  const [darkMode, setDarkMode] = useState(true);
+  const [user, setUser] = useState(null);
+  const [brandFilter, setBrandFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('featured');
+  const [searchFilters, setSearchFilters] = useState({ brand:'', fuel:'', maxPrice:'' });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.className = darkMode ? '' : 'light-mode';
+  }, [darkMode]);
+
+  const toast = useCallback((msg, type = 'success') => {
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    const icons = { success:'✓', error:'✕', info:'ℹ' };
+    el.innerHTML = `<span>${icons[type]||'✓'}</span> ${msg}`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 2800);
+  }, []);
+
+  const go = useCallback((p, car = null) => {
+    if (car) setSelectedCar(car);
+    setPage(p);
+    setMobileOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const addToCart = useCallback((car) => {
+    setCart(c => {
+      if (c.find(x => x.id === car.id)) { toast('Already in cart', 'error'); return c; }
+      toast('Added to cart ✓');
+      return [...c, car];
+    });
+  }, [toast]);
+
+  const removeFromCart = useCallback((id) => {
+    setCart(c => c.filter(x => x.id !== id));
+    toast('Removed from cart', 'info');
+  }, [toast]);
+
+  const toggleWish = useCallback((car) => {
+    setWishlist(w => {
+      if (w.find(x => x.id === car.id)) { toast('Removed from wishlist', 'info'); return w.filter(x => x.id !== car.id); }
+      toast('Saved to wishlist ♥');
+      return [...w, car];
+    });
+  }, [toast]);
+
+  const val = {
+    page, go, selectedCar, cart, setCart, wishlist,
+    darkMode, setDarkMode, user, setUser,
+    brandFilter, setBrandFilter, sortBy, setSortBy,
+    searchFilters, setSearchFilters,
+    addToCart, removeFromCart, toggleWish, toast,
+    sidebarCollapsed, setSidebarCollapsed,
+    mobileOpen, setMobileOpen,
+  };
+  return <Ctx.Provider value={val}>{children}</Ctx.Provider>;
+}
+
+const useApp = () => useContext(Ctx);
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+function Sidebar() {
+  const { go, page, cart, wishlist, darkMode, setDarkMode, user, setUser, toast,
+          sidebarCollapsed, setSidebarCollapsed, mobileOpen, setMobileOpen } = useApp();
+
+  const navItems = [
+    { page:'home',     icon:'🏠', label:'Home' },
+    { page:'listings', icon:'🚗', label:'Inventory' },
+    { page:'wishlist', icon:'❤️',  label:'Wishlist', badge: wishlist.length || null },
+  ];
+
+  return (
+    <>
+      <div id="sidebar-overlay" className={mobileOpen ? 'visible' : ''} onClick={() => setMobileOpen(false)} />
+      <aside id="sidebar" className={`${sidebarCollapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-header">
+          <span className="sidebar-logo" onClick={() => go('home')}>AutoElite</span>
+          <button className="sidebar-toggle" onClick={() => { setSidebarCollapsed(c => !c); setMobileOpen(false); }}>
+            {sidebarCollapsed ? '▶' : '◀'}
+          </button>
+        </div>
+        <nav className="sidebar-nav">
+          <div className="nav-section-label">Navigation</div>
+          {navItems.map(item => (
+            <button key={item.page}
+              className={`nav-item ${page===item.page?'active':''}`}
+              data-tip={sidebarCollapsed ? item.label : undefined}
+              onClick={() => go(item.page)}>
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+              {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
+            </button>
+          ))}
+          <div className="nav-section-label" style={{marginTop:24}}>Shop</div>
+          <button className="sidebar-cart-btn" data-tip={sidebarCollapsed ? 'Cart' : undefined} onClick={() => go('cart')}>
+            <span className="nav-icon">🛒</span>
+            <span className="nav-label">Cart</span>
+            {cart.length > 0 && <span className="nav-badge">{cart.length}</span>}
+          </button>
+          {user && (
+            <button className="nav-item" data-tip={sidebarCollapsed ? 'Checkout' : undefined} onClick={() => go('checkout')}>
+              <span className="nav-icon">✅</span>
+              <span className="nav-label">Checkout</span>
+            </button>
+          )}
+        </nav>
+        <div className="sidebar-footer">
+          {user && (
+            <div className="sidebar-user">
+              <div className="user-avatar">{user.name[0].toUpperCase()}</div>
+              <div className="user-info">
+                <div className="user-name">{user.name}</div>
+                <div className="user-role">Member</div>
+              </div>
+            </div>
+          )}
+          <button className="sidebar-footer-btn" data-tip={sidebarCollapsed ? (darkMode?'Light':'Dark') : undefined} onClick={() => setDarkMode(d => !d)}>
+            <span className="nav-icon">{darkMode ? '☀️' : '🌙'}</span>
+            <span className="nav-label">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
+          {user
+            ? <button className="sidebar-footer-btn" data-tip={sidebarCollapsed ? 'Logout' : undefined} onClick={() => { setUser(null); toast('Logged out','info'); go('home'); }}>
+                <span className="nav-icon">🚪</span><span className="nav-label">Logout</span>
+              </button>
+            : <button className="sidebar-footer-btn" data-tip={sidebarCollapsed ? 'Login' : undefined} onClick={() => go('auth')}>
+                <span className="nav-icon">👤</span><span className="nav-label">Login / Sign Up</span>
+              </button>
+          }
+        </div>
+      </aside>
+    </>
+  );
+}
+
+// ─── TOPBAR ──────────────────────────────────────────────────────────────────
+function Topbar() {
+  const { go, cart, setMobileOpen, mobileOpen } = useApp();
+  return (
+    <div id="topbar">
+      <button className="hamburger" onClick={() => setMobileOpen(o => !o)}>
+        {mobileOpen ? '✕' : '☰'}
+      </button>
+      <span className="topbar-logo" onClick={() => go('home')}>AutoElite</span>
+      <button className="topbar-cart" onClick={() => go('cart')}>
+        🛒 {cart.length > 0 && <span style={{background:'#000',color:'var(--accent)',borderRadius:'50%',width:18,height:18,fontSize:10,fontWeight:800,display:'inline-flex',alignItems:'center',justifyContent:'center',marginLeft:4}}>{cart.length}</span>}
+      </button>
+    </div>
+  );
+}
+
+// ─── HERO ────────────────────────────────────────────────────────────────────
+function Hero() {
+  const { go, setSearchFilters, setBrandFilter } = useApp();
+  const [sf, setSf] = useState({ brand:'', fuel:'', maxPrice:'' });
+  const doSearch = () => { setSearchFilters(sf); setBrandFilter(sf.brand || 'All'); go('listings'); };
+  return (
+    <div className="hero">
+      <div className="hero-bg" />
+      <div className="hero-grid" />
+      <div className="hero-content fade-in">
+        <div className="hero-badge">Premium Collection 2024</div>
+        <h1 className="hero-h1">Drive Your<br /><span className="accent">Dream Car</span></h1>
+        <p className="hero-p">Curated selection of the world's finest automobiles. From raw supercar performance to refined grand touring — your perfect car is here.</p>
+        <div className="search-bar">
+          <select className="s-input" value={sf.brand} onChange={e => setSf({...sf, brand:e.target.value})}>
+            <option value="">All Brands</option>
+            {BRANDS.filter(b => b !== 'All').map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+          <select className="s-input" value={sf.fuel} onChange={e => setSf({...sf, fuel:e.target.value})}>
+            <option value="">Any Fuel</option>
+            {['Petrol','Electric','Hybrid'].map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+          <select className="s-input" value={sf.maxPrice} onChange={e => setSf({...sf, maxPrice:e.target.value})}>
+            <option value="">Any Price</option>
+            <option value="100000">Under $100K</option>
+            <option value="200000">Under $200K</option>
+            <option value="300000">Under $300K</option>
+            <option value="400000">Under $400K</option>
+          </select>
+          <button className="search-go" onClick={doSearch}>🔍 Search Cars</button>
+        </div>
+      </div>
+      <div className="hero-img">
+        <img
+          src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Q2Fyc3xlbnwwfHwwfHx8MA%3D%3D"
+          alt="Hero Car"
+          onError={e => { e.target.src='https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/2020_Porsche_911_Turbo_S_%28992%29%2C_front_8.15.19.jpg/1280px-2020_Porsche_911_Turbo_S_%28992%29%2C_front_8.15.19.jpg'; }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── CAR CARD ────────────────────────────────────────────────────────────────
+function CarCard({ car }) {
+  const { go, addToCart, toggleWish, wishlist, cart } = useApp();
+  const inCart = !!cart.find(x => x.id === car.id);
+  const inWish = !!wishlist.find(x => x.id === car.id);
+  return (
+    <div className="car-card fade-in" onClick={() => go('detail', car)}>
+      <div className="card-img">
+        <img src={car.img} alt={car.brand + ' ' + car.name}
+          onError={e => { const fb = FALLBACKS[car.brand]; if (fb && e.target.src !== fb) e.target.src = fb; }} />
+        {car.badge && <span className={`card-badge badge-${car.badge}`}>{car.badge === 'new' ? 'New' : car.badge === 'sale' ? 'Sale' : 'Hot'}</span>}
+        <button className={`fav-btn ${inWish?'active':''}`} onClick={e => { e.stopPropagation(); toggleWish(car); }}>
+          {inWish ? '❤️' : '🤍'}
+        </button>
+      </div>
+      <div className="card-body">
+        <div className="card-brand">{car.brand}</div>
+        <div className="card-name">{car.name}</div>
+        <div className="card-specs">
+          <span className="card-spec">📅 {car.year}</span>
+          <span className="card-spec">⛽ {car.fuel}</span>
+          <span className="card-spec">⚡ {car.power}</span>
+          <span className="card-spec">🛣️ {car.mileage === 0 ? 'Brand New' : car.mileage.toLocaleString() + ' mi'}</span>
+        </div>
+        <div className="card-footer">
+          <div className="card-price">${Math.round(car.price / 1000)}K<sup> USD</sup></div>
+          <button className={`add-cart-btn ${inCart ? 'in-cart' : ''}`} onClick={e => { e.stopPropagation(); addToCart(car); }}>
+            {inCart ? '✓ Added' : '+ Cart'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── HOME ────────────────────────────────────────────────────────────────────
+function HomePage() {
+  const { go } = useApp();
+  return (
+    <>
+      <Hero />
+      <div className="stats-bar">
+        <div className="stats-inner">
+          {[['500+','Cars in Stock'],['50+','Premium Brands'],['2,400+','Happy Clients'],['15+','Years Experience']].map(([n,l]) => (
+            <div key={l} className="stat"><div className="stat-n">{n}</div><div className="stat-l">{l}</div></div>
+          ))}
+        </div>
+      </div>
+      <div className="section">
+        <div className="sec-head">
+          <div className="sec-title">Featured <span className="a">Picks</span></div>
+          <button className="see-all" onClick={() => go('listings')}>View All Inventory →</button>
+        </div>
+        <div className="cars-grid">{CARS.slice(0, 4).map(c => <CarCard key={c.id} car={c} />)}</div>
+      </div>
+      <div className="section" style={{paddingTop:0}}>
+        <div className="sec-head">
+          <div className="sec-title">New <span className="a">Arrivals</span></div>
+          <button className="see-all" onClick={() => go('listings')}>See All →</button>
+        </div>
+        <div className="cars-grid">{CARS.filter(c => c.badge === 'new').map(c => <CarCard key={c.id} car={c} />)}</div>
+      </div>
+    </>
+  );
+}
+
+// ─── LISTINGS ────────────────────────────────────────────────────────────────
+function ListingsPage() {
+  const { brandFilter, setBrandFilter, sortBy, setSortBy, searchFilters } = useApp();
+  const filtered = useMemo(() => {
+    let cars = [...CARS];
+    if (brandFilter !== 'All') cars = cars.filter(c => c.brand === brandFilter);
+    if (searchFilters.brand) cars = cars.filter(c => c.brand === searchFilters.brand);
+    if (searchFilters.fuel) cars = cars.filter(c => c.fuel === searchFilters.fuel);
+    if (searchFilters.maxPrice) cars = cars.filter(c => c.price <= parseInt(searchFilters.maxPrice));
+    if (sortBy === 'price-asc') cars.sort((a,b) => a.price - b.price);
+    else if (sortBy === 'price-desc') cars.sort((a,b) => b.price - a.price);
+    else if (sortBy === 'newest') cars.sort((a,b) => b.year - a.year);
+    else if (sortBy === 'rating') cars.sort((a,b) => b.rating - a.rating);
+    return cars;
+  }, [brandFilter, sortBy, searchFilters]);
+
+  return (
+    <>
+      <div className="listings-header">
+        <div className="page-title">Our <span style={{color:'var(--accent)'}}>Inventory</span></div>
+        <div className="page-sub">{filtered.length} vehicles available</div>
+        <div className="filters-row">
+          {BRANDS.map(b => (
+            <button key={b} className={`chip ${brandFilter===b?'on':''}`} onClick={() => setBrandFilter(b)}>{b}</button>
+          ))}
+          <select className="sort-sel" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+            <option value="featured">Sort: Featured</option>
+            <option value="price-asc">Price: Low → High</option>
+            <option value="price-desc">Price: High → Low</option>
+            <option value="newest">Newest First</option>
+            <option value="rating">Top Rated</option>
+          </select>
+        </div>
+      </div>
+      <div className="section" style={{paddingTop:20}}>
+        {filtered.length === 0
+          ? <div className="empty"><div className="empty-icon">🔍</div><div className="empty-title">No vehicles match your filters</div><div className="empty-sub">Try adjusting your search criteria</div></div>
+          : <div className="cars-grid">{filtered.map(c => <CarCard key={c.id} car={c} />)}</div>
+        }
+      </div>
+    </>
+  );
+}
+
+// ─── DETAIL ──────────────────────────────────────────────────────────────────
+function DetailPage() {
+  const { selectedCar:car, addToCart, toggleWish, wishlist, cart, go } = useApp();
+  const [activeThumb, setActiveThumb] = useState(0);
+  if (!car) return <div className="section"><p>No car selected.</p></div>;
+  const inCart = !!cart.find(x => x.id === car.id);
+  const inWish = !!wishlist.find(x => x.id === car.id);
+  const imgs = car.imgs || [car.img];
+  const REVIEWS = [
+    { name:'James K.', date:'2 weeks ago', stars:5, avatar:'J', text:'Absolutely incredible. The power delivery is addictive and the interior quality is flawless. The team at AutoElite made the whole process seamless.' },
+    { name:'Sofia M.', date:'1 month ago', stars:5, avatar:'S', text:'Exceeded every single expectation. Professional staff, transparent pricing, and the car was presented beautifully on collection day.' },
+    { name:'David R.', date:'2 months ago', stars:4, avatar:'D', text:'Stunning car. Minor delay in delivery but the team communicated well throughout. The car itself is breathtaking in person.' },
+  ];
+  return (
+    <div className="detail-wrap fade-in">
+      <button className="back-btn" onClick={() => go('listings')}>← Back to Inventory</button>
+      <div className="detail-grid">
+        <div>
+          <div className="detail-main-img">
+            <img src={imgs[activeThumb]} alt={car.brand + ' ' + car.name} />
+          </div>
+          <div className="thumb-row">
+            {imgs.map((url, i) => (
+              <div key={i} className={`thumb ${activeThumb===i?'on':''}`} onClick={() => setActiveThumb(i)}>
+                <img src={url} alt={`View ${i+1}`} />
+              </div>
+            ))}
+          </div>
+          <div className="reviews-section">
+            <div className="sec-title" style={{marginBottom:20}}>Customer <span className="a">Reviews</span></div>
+            {REVIEWS.map((r,i) => (
+              <div key={i} className="review-card">
+                <div className="rev-head">
+                  <div className="rev-avatar">{r.avatar}</div>
+                  <div>
+                    <div className="rev-name">{r.name}</div>
+                    <div className="rev-meta">{'⭐'.repeat(r.stars)} · {r.date}</div>
+                  </div>
+                </div>
+                <div className="rev-text">{r.text}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="detail-sidebar">
+          <div className="d-brand">{car.brand}</div>
+          <div className="d-name">{car.name}</div>
+          <div className="rating-row">
+            <span className="stars">{'★'.repeat(Math.round(car.rating))}{'☆'.repeat(5-Math.round(car.rating))}</span>
+            <strong style={{fontSize:15}}>{car.rating}</strong>
+            <span style={{fontSize:13,color:'var(--text3)'}}>({car.reviews} reviews)</span>
+          </div>
+          <div className="d-price">${car.price.toLocaleString()}<sup> USD</sup></div>
+          <div className="monthly">or ~${Math.round(car.price/60).toLocaleString()}/mo with financing</div>
+          <div className="specs-2col">
+            {[['Year',car.year],['Fuel Type',car.fuel],['Engine',car.engine],['Power',car.power],['Transmission',car.transmission],['Seats',car.seats+' seats'],['Mileage',car.mileage===0?'Brand New':car.mileage.toLocaleString()+' mi'],['Colour',car.color]].map(([l,v]) => (
+              <div key={l} className="spec-box"><div className="spec-lbl">{l}</div><div className="spec-val">{v}</div></div>
+            ))}
+          </div>
+          <p className="d-desc">{car.desc}</p>
+          <div className="cta-row">
+            <button className={`cta-main ${inCart?'added':''}`} onClick={() => addToCart(car)}>
+              {inCart ? '✓ Added to Cart' : '🛒 Add to Cart'}
+            </button>
+            <button className="cta-outline" onClick={() => toggleWish(car)} title="Wishlist">
+              {inWish ? '❤️' : '🤍'}
+            </button>
+          </div>
+          <button className="cta-full">📞 Contact Dealer</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CART ────────────────────────────────────────────────────────────────────
+function CartPage() {
+  const { cart, removeFromCart, go, user } = useApp();
+  const subtotal = cart.reduce((s,c) => s + c.price, 0);
+  const tax = Math.round(subtotal * 0.075);
+  const doc = 1200;
+  const total = subtotal + tax + doc;
+  if (cart.length === 0) return (
+    <div className="cart-wrap">
+      <div className="page-title">Your <span style={{color:'var(--accent)'}}>Cart</span></div>
+      <div className="empty" style={{paddingTop:60}}>
+        <div className="empty-icon">🛒</div>
+        <div className="empty-title">Your cart is empty</div>
+        <div className="empty-sub">Browse our inventory and add your dream car</div>
+        <button className="empty-btn" onClick={() => go('listings')}>Browse Inventory</button>
+      </div>
+    </div>
+  );
+  return (
+    <div className="cart-wrap">
+      <div className="page-title">Your <span style={{color:'var(--accent)'}}>Cart</span></div>
+      <div className="page-sub">{cart.length} {cart.length===1?'vehicle':'vehicles'} selected</div>
+      {cart.map(car => (
+        <div key={car.id} className="cart-item">
+          <div className="ci-img"><img src={car.img} alt={car.name} /></div>
+          <div className="ci-info">
+            <div className="ci-name">{car.brand} {car.name}</div>
+            <div className="ci-meta">{car.year} · {car.fuel} · {car.color}</div>
+          </div>
+          <div className="ci-price">${(car.price/1000).toFixed(0)}K</div>
+          <button className="rm-btn" onClick={() => removeFromCart(car.id)}>✕</button>
+        </div>
+      ))}
+      <div className="cart-summary">
+        <div className="sum-row"><span>Subtotal</span><span>${subtotal.toLocaleString()}</span></div>
+        <div className="sum-row"><span>Tax &amp; Fees (7.5%)</span><span>${tax.toLocaleString()}</span></div>
+        <div className="sum-row"><span>Documentation Fee</span><span>${doc.toLocaleString()}</span></div>
+        <div className="sum-total"><span>Total</span><span>${total.toLocaleString()}</span></div>
+        <button className="checkout-btn" onClick={() => go(user ? 'checkout' : 'auth')}>
+          {user ? 'Proceed to Checkout →' : 'Login to Checkout →'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── WISHLIST ────────────────────────────────────────────────────────────────
+function WishlistPage() {
+  const { wishlist, go } = useApp();
+  if (wishlist.length === 0) return (
+    <div className="wishlist-wrap">
+      <div className="page-title">My <span style={{color:'var(--accent)'}}>Wishlist</span></div>
+      <div className="empty" style={{paddingTop:60}}>
+        <div className="empty-icon">❤️</div>
+        <div className="empty-title">No saved vehicles</div>
+        <div className="empty-sub">Tap the heart on any car to save it here</div>
+        <button className="empty-btn" onClick={() => go('listings')}>Browse Inventory</button>
+      </div>
+    </div>
+  );
+  return (
+    <div className="wishlist-wrap">
+      <div className="page-title">My <span style={{color:'var(--accent)'}}>Wishlist</span></div>
+      <div className="page-sub">{wishlist.length} saved vehicles</div>
+      <div className="cars-grid">{wishlist.map(c => <CarCard key={c.id} car={c} />)}</div>
+    </div>
+  );
+}
+
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+function AuthPage() {
+  const { setUser, go, toast } = useApp();
+  const [isLogin, setIsLogin] = useState(true);
+  const [form, setForm] = useState({ name:'', email:'', password:'' });
+  const submit = () => {
+    if (!form.email || !form.password) { toast('Please fill in all fields', 'error'); return; }
+    setUser({ email: form.email, name: form.name || form.email.split('@')[0] });
+    toast(isLogin ? 'Welcome back! 👋' : 'Account created! 🎉');
+    go('home');
+  };
+  return (
+    <div className="auth-wrap">
+      <div className="auth-box">
+        <div className="auth-logo">AutoElite</div>
+        <div className="auth-h">{isLogin ? 'Welcome Back' : 'Create Account'}</div>
+        <div className="auth-sub">{isLogin ? 'Sign in to continue to your account' : 'Join thousands of satisfied customers'}</div>
+        {!isLogin && (
+          <div className="form-grp">
+            <label className="form-lbl">Full Name</label>
+            <input className="form-inp" placeholder="John Smith" value={form.name} onChange={e => setForm({...form,name:e.target.value})} />
+          </div>
+        )}
+        <div className="form-grp">
+          <label className="form-lbl">Email Address</label>
+          <input className="form-inp" type="email" placeholder="you@example.com" value={form.email} onChange={e => setForm({...form,email:e.target.value})} />
+        </div>
+        <div className="form-grp">
+          <label className="form-lbl">Password</label>
+          <input className="form-inp" type="password" placeholder="••••••••" value={form.password} onChange={e => setForm({...form,password:e.target.value})} />
+        </div>
+        <button className="auth-submit" onClick={submit}>{isLogin ? 'Sign In →' : 'Create Account →'}</button>
+        <div className="auth-switch-row">
+          {isLogin ? 'New to AutoElite? ' : 'Already have an account? '}
+          <button className="link-btn" onClick={() => setIsLogin(l => !l)}>{isLogin ? 'Create Account' : 'Sign In'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CHECKOUT ────────────────────────────────────────────────────────────────
+function CheckoutPage() {
+  const { cart, go, toast, setCart, user } = useApp();
+  const total = cart.reduce((s,c) => s + c.price, 0);
+  const confirm = () => {
+    setCart([]);
+    toast('Order confirmed! We\'ll contact you soon 🎉');
+    go('home');
+  };
+  return (
+    <div className="checkout-wrap">
+      <div className="page-title">Checkout</div>
+      <div className="page-sub">Hello {user?.name} — review and confirm your order</div>
+      <div className="checkout-section">
+        <div className="checkout-section-title">Contact Information</div>
+        {[['Full Name','text','John Smith'],['Email','email','john@example.com'],['Phone','tel','+1 (555) 000-0000']].map(([l,t,p]) => (
+          <div key={l} className="form-grp"><label className="form-lbl">{l}</label><input className="form-inp" type={t} placeholder={p} defaultValue={l==='Email'?user?.email:''} /></div>
+        ))}
+      </div>
+      <div className="checkout-section">
+        <div className="checkout-section-title">Delivery Address</div>
+        {[['Street Address','123 Main Street'],['City','New York'],['ZIP / Postal Code','10001']].map(([l,p]) => (
+          <div key={l} className="form-grp"><label className="form-lbl">{l}</label><input className="form-inp" placeholder={p} /></div>
+        ))}
+      </div>
+      <div className="cart-summary">
+        {cart.map(c => <div key={c.id} className="sum-row"><span>{c.brand} {c.name}</span><span>${c.price.toLocaleString()}</span></div>)}
+        <div className="sum-total"><span>Total</span><span>${Math.round(total*1.075+1200).toLocaleString()}</span></div>
+        <button className="checkout-btn" onClick={confirm}>✓ Confirm Order</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── FOOTER ──────────────────────────────────────────────────────────────────
+function Footer() {
+  const { go } = useApp();
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+  return (
+    <footer>
+      <div className="footer-glow"/>
+      <div className="footer-bg-text">AUTOELITE</div>
+      <div className="footer-top">
+        <div>
+          <span className="footer-logo">AutoElite</span>
+          <p className="footer-tagline">The world's most exclusive automotive marketplace. Curated supercars, luxury GTs, and electric performance vehicles.</p>
+          <div className="footer-socials">
+            {['𝕏','in','f','▶'].map((s,i) => <button key={i} className="social-btn">{s}</button>)}
+          </div>
+          <div className="footer-badges">
+            <div className="footer-badge">🔒 Secure Payments</div>
+            <div className="footer-badge">✓ Verified Dealers</div>
+            <div className="footer-badge">🚗 1,000+ Cars</div>
+          </div>
+        </div>
+        <div>
+          <div className="footer-col-title">Company</div>
+          <div className="footer-col-links">
+            {[['home','About Us'],['listings','Our Inventory'],['listings','How It Works'],['listings','Careers']].map(([p,l]) => (
+              <button key={l} className="footer-link" onClick={() => go(p)}>{l}</button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="footer-col-title">Support</div>
+          <div className="footer-col-links">
+            {[['home','Help Center'],['home','Contact Us'],['home','Financing'],['home','Test Drive']].map(([p,l]) => (
+              <button key={l} className="footer-link" onClick={() => go(p)}>{l}</button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="footer-col-title">Stay Updated</div>
+          <p style={{fontSize:13,color:'var(--text2)',lineHeight:1.6,marginBottom:4}}>New arrivals and exclusive deals, straight to your inbox.</p>
+          {subscribed ? (
+            <div style={{background:'rgba(61,232,154,0.1)',border:'1px solid var(--green)',borderRadius:10,padding:'12px 14px',fontSize:13,color:'var(--green)',marginTop:8}}>✓ You're subscribed!</div>
+          ) : (
+            <>
+              <div className="newsletter-input-row">
+                <input className="newsletter-input" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)}/>
+                <button className="newsletter-btn" onClick={() => email.includes('@') && setSubscribed(true)}>→</button>
+              </div>
+              <p className="newsletter-note">No spam. Unsubscribe anytime.</p>
+            </>
+          )}
+          <div style={{marginTop:20}}>
+            <div className="footer-col-title">Contact</div>
+            <p style={{fontSize:13,color:'var(--text2)',lineHeight:2}}>
+              📍 123 Luxury Lane, NY 10001<br/>
+              📞 +1 (800) AUTO-ELITE<br/>
+              ✉️ hello@autoelite.com
+            </p>
+          </div>
+        </div>
+      </div>
+      <hr className="footer-divider"/>
+      <div className="footer-bottom">
+        <span className="footer-copy">© 2024 AutoElite Inc. All rights reserved.</span>
+        <div className="footer-legal">
+          {['Privacy Policy','Terms of Service','Cookie Policy'].map(l => (
+            <button key={l} className="footer-legal-link">{l}</button>
+          ))}
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ─── APP ─────────────────────────────────────────────────────────────────────
+// FIX: Replaced undefined <Nav /> with <Sidebar /> + <Topbar />
+// FIX: Added sidebarCollapsed state to drive #main-content class
+function App() {
+  const { page, sidebarCollapsed } = useApp();
+  const pages = {
+    home:<HomePage/>, listings:<ListingsPage/>, detail:<DetailPage/>,
+    cart:<CartPage/>, wishlist:<WishlistPage/>, auth:<AuthPage/>, checkout:<CheckoutPage/>
+  };
+  return (
+    <div id="app-layout">
+      <Sidebar />
+      <div id="main-content" className={sidebarCollapsed ? 'collapsed' : ''}>
+        <Topbar />
+        <main>{pages[page] || <HomePage />}</main>
+        <Footer />
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <Provider><App /></Provider>
+);
+</script>
+</body>
+</html>
